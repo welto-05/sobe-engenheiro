@@ -1,0 +1,71 @@
+# Exporta o jogo para Web e publica no GitHub Pages
+# a cada envio para a branch main.
+name: Publicar no navegador
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  exportar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GODOT_VERSION: "4.4.1"
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Baixar a Godot e o modelo Web
+        run: |
+          cd "$RUNNER_TEMP"
+          BASE="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
+          wget -q "$BASE/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q "Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot
+          chmod +x godot
+          wget -q "$BASE/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          unzip -q "Godot_v${GODOT_VERSION}-stable_export_templates.tpz" "templates/web_nothreads_release.zip" "templates/web_nothreads_debug.zip" "templates/version.txt"
+          DEST="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          mkdir -p "$DEST"
+          mv templates/* "$DEST/"
+          echo "GODOT=$RUNNER_TEMP/godot" >> "$GITHUB_ENV"
+
+      - name: Importar o projeto
+        run: $GODOT --headless --path . --import
+
+      - name: Exportar para Web
+        run: |
+          mkdir -p build/web
+          $GODOT --headless --path . --export-release "Web" build/web/index.html
+          ls -la build/web
+          test -f build/web/index.html
+
+      - name: Preparar o GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Enviar os arquivos do jogo
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  publicar:
+    needs: exportar
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Publicar
+        id: deploy
+        uses: actions/deploy-pages@v4
