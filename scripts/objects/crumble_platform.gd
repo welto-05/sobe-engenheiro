@@ -5,8 +5,8 @@ extends StaticBody2D
 
 enum S { IDLE, SHAKING, GONE }
 
-var delay: float = 0.45     ## tempo entre pisar e cair
-var respawn: float = 2.5    ## tempo para a tábua voltar
+var delay: float = 0.35     ## tempo entre pisar e cair
+var respawn: float = 2.2    ## tempo para a tábua voltar
 
 var _s: S = S.IDLE
 var _timer: float = 0.0
@@ -21,7 +21,6 @@ func _ready() -> void:
 	_shape = Shapes.rect(self, Vector2(16, 6), Vector2(8, 3))
 	_shape.one_way_collision = true
 	_shape.one_way_collision_margin = 4.0
-	# Sensor fininho logo acima da tábua para saber se alguém pisou.
 	_sensor = Area2D.new()
 	_sensor.collision_layer = 0
 	_sensor.collision_mask = 2
@@ -43,6 +42,7 @@ func _physics_process(delta: float) -> void:
 				_s = S.GONE
 				_timer = respawn
 				_shape.set_deferred("disabled", true)
+				Poof.spawn(get_parent(), position + Vector2(8, 4), Color("a1887f"), 8.0)
 		S.GONE:
 			_timer -= delta
 			if _timer <= 0.0:
@@ -53,17 +53,16 @@ func _physics_process(delta: float) -> void:
 
 func _draw() -> void:
 	if _s == S.GONE:
-		# contorno tracejado mostrando onde a tábua vai voltar
-		var alpha: float = 0.35 if _timer < 0.6 else 0.15
+		var alpha: float = 0.45 if _timer < 0.6 else 0.18
 		for i in 4:
-			draw_rect(Rect2(i * 4, 0, 2, 1), Color(1, 1, 1, alpha))
+			draw_rect(Rect2(i * 4 + 1, 1, 2, 2), Color(1, 1, 1, alpha))
 		return
 	var off := Vector2.ZERO
 	if _s == S.SHAKING:
-		off.x = sin(_timer * 90.0) * 1.0
+		off.x = sin(_timer * 90.0) * 1.2
 		off.y = 1.0
-	draw_rect(Rect2(off.x, off.y, 16, 4), Color("8d6e3f"))
-	draw_rect(Rect2(off.x, off.y + 3, 16, 1), Color("5d4527"))
-	draw_rect(Rect2(off.x + 5, off.y, 1, 2), Color("3e2d18"))   # rachaduras
-	draw_rect(Rect2(off.x + 6, off.y + 2, 1, 1), Color("3e2d18"))
-	draw_rect(Rect2(off.x + 11, off.y + 1, 1, 2), Color("3e2d18"))
+	Toon.rect(self, Rect2(off.x + 0.5, off.y, 15, 5), Color("a1887f"))
+	draw_rect(Rect2(off.x + 1, off.y, 14, 1), Color("d7ccc8"))
+	draw_line(Vector2(off.x + 5, off.y), Vector2(off.x + 7, off.y + 3), Toon.OUTLINE, 1.0)
+	draw_line(Vector2(off.x + 7, off.y + 3), Vector2(off.x + 6, off.y + 5), Toon.OUTLINE, 1.0)
+	draw_line(Vector2(off.x + 11, off.y + 1), Vector2(off.x + 12, off.y + 4), Toon.OUTLINE, 1.0)

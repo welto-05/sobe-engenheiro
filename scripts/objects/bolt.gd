@@ -1,6 +1,6 @@
 class_name Bolt
 extends Area2D
-## Porca/parafuso colecionável. Futuramente vira moeda da loja de capacetes.
+## Porca colecionável (o "fruta" do nosso jogo). Vira moeda da loja depois.
 
 signal collected
 
@@ -13,7 +13,7 @@ func _ready() -> void:
 	collision_mask = 2
 	monitorable = false
 	z_index = 2
-	Shapes.circle(self, 6.0, Vector2.ZERO)
+	Shapes.circle(self, 7.0, Vector2.ZERO)
 	body_entered.connect(_on_body_entered)
 	_base_y = position.y
 	_t = position.x * 0.05
@@ -28,15 +28,16 @@ func _process(delta: float) -> void:
 func _on_body_entered(body: Node2D) -> void:
 	if body is Player and not (body as Player).is_dead():
 		collected.emit()
+		Poof.spawn(get_parent(), position, Color("ffe082"), 7.0)
 		queue_free()
 
 
 func _draw() -> void:
+	var squash: float = absf(cos(_t * 2.5)) * 0.65 + 0.35   # "gira"
 	var pts := PackedVector2Array()
-	var squash: float = absf(cos(_t * 2.0)) * 0.6 + 0.4   # "gira" achatando
 	for i in 6:
 		var a: float = TAU * i / 6.0
-		pts.append(Vector2(cos(a) * 5.0 * squash, sin(a) * 5.0))
-	draw_colored_polygon(pts, Color("cfd8dc"))
-	draw_rect(Rect2(-1.0 * squash - 0.5, -2, 2.0 * squash + 1.0, 4), Color("546e7a"))
-	draw_rect(Rect2(-3.0 * squash, -4, 1, 1), Color.WHITE)
+		pts.append(Vector2(cos(a) * 6.0 * squash, sin(a) * 6.0))
+	Toon.poly(self, pts, Color("ffca28"))
+	draw_circle(Vector2.ZERO, 2.2 * squash + 0.3, Color("8d6e00"))
+	draw_rect(Rect2(-3.5 * squash, -4, 1.5, 1.5), Color.WHITE)

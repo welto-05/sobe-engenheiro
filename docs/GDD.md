@@ -1,4 +1,4 @@
-# Sobe, Engenheiro! — Game Design Document (v0.1)
+# Sobe, Engenheiro! — Game Design Document (v0.2)
 
 > Documento vivo. Atualize sempre que uma decisão mudar.
 
@@ -23,28 +23,30 @@
 
 > Inspiração de *sensação* de movimento em Leap Day (Nitrome). Nenhum personagem, sprite, cenário, som ou nome é copiado: toda a arte e o conteúdo são originais.
 
-## 2. Mecânicas (valores atuais do protótipo)
+## 2. Mecânicas (v0.2 — mais rápido, estilo Leap Day)
 
 Medidas em pixels; um bloco = 16 px. Todos os números ficam no Inspetor de `scenes/player.tscn`.
 
 | Mecânica | Comportamento | Valor |
 |---|---|---|
-| Corrida automática | Velocidade constante, sem aceleração | 100 px/s (atravessa o andar em ~3 s) |
+| Corrida automática | Velocidade constante | 140 px/s (atravessa o andar em ~2 s) |
 | Virar na parede | Bateu numa parede **no chão** → inverte a direção | — |
-| Pulo | Altura fixa (previsível no toque) | −330 px/s → ~3,4 blocos |
-| Pulo duplo | 1 vez no ar, recarrega no chão ou ao agarrar parede; corrige a trajetória | −290 px/s → total ~5,8 blocos |
-| Coyote time | Ainda dá para pular logo depois de sair da beirada | 0,08 s |
-| Jump buffer | Toque um pouco antes de pousar vale | 0,12 s |
-| Agarrar parede | Bateu numa parede **no ar** → fica parado agarrado | 0,30 s |
-| Escorregar | Depois do tempo agarrado, desce devagar | máx. 45 px/s |
-| Pulo de parede | Sai para o lado oposto com impulso de pulo | −330 px/s |
-| Gravidade / queda máx. | — | 1000 px/s² / 420 px/s |
-| Pulo variável | Desligado por padrão (no toque, toques curtos geravam pulos curtos sem querer) | `variable_jump` |
+| Pulo | Altura fixa (previsível no toque) | −400 px/s → ~3,5 blocos |
+| Pulo duplo | 1 vez no ar, recarrega no chão, na parede, ao pisar inimigo ou na mola | −350 px/s → total ~6 blocos |
+| Pisão | Cair na cabeça de inimigo "pisável" derrota e quica | −380 px/s |
+| Pneu-mola | Lança muito alto | −620 px/s → ~8,5 blocos |
+| Agarrar parede | Bateu numa parede **no ar** → segura um instante | 0,15 s |
+| Escorregar / pulo de parede | Desce devagar; pulo sai para o lado oposto | 70 px/s / −400 px/s |
+| Gravidade / queda máx. | Mais "pesada" = pulos mais rápidos e secos | 1400 px/s² / 520 px/s |
+| Coyote time / jump buffer | Tolerâncias invisíveis para o toque | 0,08 s / 0,12 s |
+| Checkpoints | Placas de segurança a cada ~20 linhas; morrer volta para a última | reinício em 0,55 s |
 
-**Regras para desenhar fases (derivadas da física)**
-- Distância vertical entre plataformas: **até 3 blocos** = pulo simples; **4–5 blocos** = exige pulo duplo.
-- Poço para escalar com pulo de parede: **3 blocos de largura** (cada pulo sobe ~3 blocos).
-- Plataformas com pelo menos 4 blocos de largura (o engenheiro atravessa 3 blocos em meio segundo).
+**Regras para desenhar fases**
+- Até **3 linhas** entre plataformas = pulo simples; **4–6 linhas** = pulo duplo; **7–8** = só com pneu-mola.
+- Poço para escalar com pulo de parede: **3 colunas** de largura.
+- Uma placa de segurança `!` a cada 15–25 linhas.
+
+**Estilo visual (caricato)**: personagens com cabeça grande, olhos enormes, contorno escuro de 1 px, achatar/esticar ao pular e pousar, cores saturadas; blocos com contorno só nas bordas expostas; céu que muda de cor conforme sobe (dia → pôr do sol).
 
 ## 3. Câmera e resolução
 
@@ -70,29 +72,33 @@ Cada andar é uma fase de ~40–60 blocos de altura, do chão (`P`) até a porta
 
 | Andar | Nome | Ensina |
 |---|---|---|
-| 1 | Primeiro dia de obra | corrida automática, virar na parede, pulo |
-| 2 | Pulo duplo e vergalhões | pulo duplo, perigo fixo |
-| 3 | Poço do elevador | agarrar, escorregar e pulo de parede |
-| 4 | Obra em movimento | plataformas móveis, elevador, tábua podre |
-| 5 | O cliente chegou | perigos móveis com padrão (martelo, cliente) + revisão |
+| 1 | Primeiro dia de obra | pulo, pisão no cliente, checkpoint, pneu-mola |
+| 2 | Pulo duplo e pombos | pulo duplo, vergalhões, pombos |
+| 3 | Poço do elevador | pulo de parede, martelo por gatilho, faísca no cabo |
+| 4 | Obra em movimento | vigas móveis, elevador, tábua podre, serra, pneu obrigatório |
+| 5 | Hora do rush | bate-estaca, drone, peão com carrinho + revisão |
 
-## 5. Obstáculos (todos com padrão aprendível)
+## 5. Obstáculos (padrão Leap Day, tema de obra)
 
-| Categoria | Obstáculo | Padrão | Status |
-|---|---|---|---|
-| Ambiente | Vergalhão exposto `^` | fixo | ✅ |
-| Ambiente | Tábua podre `C` | cai 0,45 s depois de pisar, volta em 2,5 s | ✅ |
-| Ambiente | Vão / buraco | queda para o andaime de baixo | ✅ |
-| Ferramenta | Martelo pendurado `H` | treme 0,55 s (aviso "!") e cai a cada 2,4 s | ✅ |
-| Pessoa | Cliente com prancheta `K` | anda ±28 px; balão "MUDA ISSO?" | ✅ |
-| Equipamento | Plataforma móvel `M` / elevador `V` | senoide, período 3,2 s / 3,6 s | ✅ |
-| Pessoa | Encarregado | para na plataforma por 2 s e bloqueia | planejado |
-| Pessoa | Trabalhador com carrinho | atravessa a plataforma em linha reta | planejado |
-| Ferramenta | Furadeira na parede | liga/desliga em ciclo; não dá para agarrar quando ligada | planejado |
-| Equipamento | Solda | jato de faíscas em ciclo de 3 tempos | planejado |
-| Equipamento | Cabo energizado | liga/desliga com zumbido de aviso | planejado |
-| Equipamento | Carga de guindaste | atravessa a tela com sombra antes | planejado |
-| Ambiente | Estrutura desmoronando | blocos caem em sequência | planejado |
+| Leap Day (tipo) | No nosso jogo | Letra | Pisável? | Padrão |
+|---|---|---|---|---|
+| Espinhos | Vergalhão exposto | `^` | não | fixo |
+| Inimigo que anda e vira na beirada | Cliente com prancheta ("MUDA ISSO?") | `K` | **sim** | anda devagar |
+| Inimigo com casco de espinhos | Peão com carrinho de tijolos | `W` | não | anda rápido |
+| Inimigo voador | Pombo de obra | `A` | **sim** | voa de parede a parede |
+| Inimigo que flutua na diagonal | Drone da fiscalização | `D` | não | quica dentro de uma área |
+| Serra em trilho | Serra circular | `S` | não | vai e volta no trilho |
+| Bola de energia em fio | Faísca no cabo energizado | `~` | não | corre de ponta a ponta |
+| Bloco esmagador | Bate-estaca | `X` | não | espera, treme, desce, sobe |
+| Estalactite | Martelo pendurado | `H` | não | cai quando você passa embaixo |
+| Mola | Pneu-mola | `J` | — | lança muito alto |
+| Plataforma que cai | Tábua podre | `C` | — | cai 0,35 s depois de pisar |
+| Plataforma móvel | Viga no guindaste / elevador | `M` / `V` | — | vai e volta |
+| Fruta | Porca dourada | `o` | — | colecionável |
+| Checkpoint | Placa de segurança (EPI → OK) | `!` | — | ponto de recomeço |
+| Taça de ouro | Capacete de ouro no elevador | `E` | — | fim do andar |
+
+Planejado: encarregado que bloqueia a plataforma, furadeira na parede, jato de solda, carga de guindaste atravessando a tela, laje desmoronando.
 
 ## 6. Personagem
 

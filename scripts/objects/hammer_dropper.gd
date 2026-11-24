@@ -1,50 +1,63 @@
 class_name HammerDropper
 extends Node2D
-## Martelo pendurado numa corda. Treme por um instante (aviso) e cai.
-## Padrão fixo e previsível: o jogador aprende o ritmo.
+## Martelo pendurado (estilo "estalactite" do Leap Day): quando o
+## engenheiro passa EMBAIXO, treme um instante e despenca. Volta depois.
 
-var interval: float = 2.4      ## segundos entre cada martelo
-var warn_time: float = 0.55    ## tempo tremendo antes de cair
-var phase: float = 0.0         ## atraso inicial (para não caírem todos juntos)
+enum S { READY, SHAKE, EMPTY }
+
+var level: Level
+var shake_time: float = 0.28
+var respawn_time: float = 2.2
 var kill_y: float = 100000.0
 
+var _s: S = S.READY
+var _timer: float = 0.0
 var _t: float = 0.0
-var _hidden: float = 0.0
 
 
 func _ready() -> void:
 	z_index = 2
-	_t = phase
 
 
 func _physics_process(delta: float) -> void:
 	_t += delta
-	_hidden = maxf(_hidden - delta, 0.0)
-	if _t >= interval:
-		_t -= interval
-		_drop()
+	match _s:
+		S.READY:
+			if level != null and is_instance_valid(level.player) and not level.player.is_dead():
+				var p: Vector2 = level.player.global_position
+				if absf(p.x - global_position.x) < 22.0 and p.y > global_position.y:
+					_s = S.SHAKE
+					_timer = shake_time
+		S.SHAKE:
+			_timer -= delta
+			if _timer <= 0.0:
+				_drop()
+		S.EMPTY:
+			_timer -= delta
+			if _timer <= 0.0:
+				_s = S.READY
 	queue_redraw()
 
 
 func _drop() -> void:
 	var h := Hammer.new()
-	h.position = position + Vector2(0, 6)
+	h.position = position + Vector2(0, 8)
 	h.kill_y = kill_y
 	get_parent().add_child(h)
-	_hidden = 0.7
+	_s = S.EMPTY
+	_timer = respawn_time
 
 
 func _draw() -> void:
-	# suporte e corda
-	draw_rect(Rect2(-6, -8, 12, 3), Color("fbc02d"))
-	draw_rect(Rect2(-6, -6, 12, 1), Color("f57f17"))
-	draw_line(Vector2(0, -5), Vector2(0, 1), Color("bcaaa4"), 1.0)
-	if _hidden > 0.0:
+	# gancho preso no teto
+	Toon.rect(self, Rect2(-5, -8, 10, 3), Color("fbc02d"))
+	draw_line(Vector2(0, -5), Vector2(0, 2), Color("8d6e63"), 1.0)
+	if _s == S.EMPTY:
 		return
-	var shake := 0.0
-	if _t > interval - warn_time:
-		shake = sin(_t * 70.0) * 1.5
-		draw_rect(Rect2(6, -6, 2, 5), Color("ff5252"))   # "!" de aviso
-		draw_rect(Rect2(6, 0, 2, 2), Color("ff5252"))
-	draw_rect(Rect2(-1 + shake, 1, 2, 7), Color("a1662f"))
-	draw_rect(Rect2(-4 + shake, 1, 8, 3), Color("78909c"))
+	var shake: float = sin(_t * 70.0) * 1.5 if _s == S.SHAKE else 0.0
+	draw_set_transform(Vector2(shake, 2), 0.0, Vector2.ONE)
+	Hammer.draw_hammer(self)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if _s == S.SHAKE:
+		Toon.rect(self, Rect2(8, -6, 3, 6), Color("ff1744"))
+		Toon.rect(self, Rect2(8, 2, 3, 2), Color("ff1744"))

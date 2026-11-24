@@ -6,17 +6,12 @@ extends Hazard
 
 func _setup() -> void:
 	z_index = 1
-	# Caixa menor que o desenho: perdoa encostadas de raspão.
 	Shapes.rect(self, Vector2(12, 6), Vector2(8, 13))
 
 
 func _draw() -> void:
-	var rod := Color("8d6e63")
-	var rod_dark := Color("5d4037")
-	var tip := Color("d7ccc8")
 	for i in 3:
-		var x0: float = 2.0 + i * 5.0
-		draw_rect(Rect2(x0, 9, 2, 7), rod)
-		draw_rect(Rect2(x0 + 1, 9, 1, 7), rod_dark)
-		draw_rect(Rect2(x0, 8, 2, 1), tip)
-	draw_rect(Rect2(0, 15, 16, 1), Color("455a64"))
+		var x0: float = 1.5 + i * 5.0
+		Toon.poly(self, PackedVector2Array([Vector2(x0, 16), Vector2(x0 + 2.5, 6), Vector2(x0 + 5, 16)]), Color("cfd8dc"))
+		draw_line(Vector2(x0 + 2.5, 8), Vector2(x0 + 2.5, 15), Color("90a4ae"), 1.0)
+	Toon.rect(self, Rect2(0, 14, 16, 2), Color("8d6e63"))

@@ -5,8 +5,8 @@ extends Camera2D
 
 var target: Node2D
 var level_size := Vector2(320, 568)
-var look_up: float = 40.0       ## quanto a câmera olha para cima do jogador
-var follow_speed: float = 6.0   ## maior = segue mais rápido
+var look_up: float = 56.0       ## quanto a câmera olha para cima do jogador
+var follow_speed: float = 9.0   ## maior = segue mais rápido
 
 
 func _ready() -> void:

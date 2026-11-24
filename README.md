@@ -2,9 +2,9 @@
 
 Arcade de plataforma vertical feito na **Godot 4**. Um engenheiro mecânico que não para de correr precisa subir um prédio em obra, andar por andar, desviando de vergalhões, martelos e clientes pedindo "só mais uma alteração".
 
-> **Status:** protótipo jogável (Etapa 2 completa + parte da Etapa 3).
-> 5 andares, movimentação completa, obstáculos, morte e reinício rápido, recordes salvos.
-> A arte ainda é feita por código (retângulos): sprites de verdade chegam na Etapa 4.
+> **Status:** protótipo v0.2 — estilo Leap Day: mais rápido, visual caricato, pisão em inimigos,
+> placas de segurança (checkpoints), 5 andares com 13 tipos de obstáculo de obra.
+> A arte é desenhada por código (formas com contorno); sprites de verdade chegam na Etapa 4.
 
 Documento de design completo: [`docs/GDD.md`](docs/GDD.md)
 
@@ -28,7 +28,7 @@ Na primeira vez a Godot demora alguns segundos importando. Se aparecer um aviso 
 | Pausar | Esc ou P | — | Start |
 | Pular para o próximo andar (só no editor) | N | — | — |
 
-**Dicas:** ele corre sozinho e vira ao bater na parede. No ar, encostar numa parede faz ele **agarrar**; toque de novo para **pular da parede**.
+**Dicas:** ele corre sozinho e vira ao bater na parede. No ar, encostar numa parede faz ele **agarrar**; toque de novo para **pular da parede**. Caia na cabeça do **cliente** e do **pombo** para derrotá-los. Ao morrer você volta para a última **placa de segurança** verde.
 
 ---
 
@@ -96,13 +96,16 @@ Abra `scenes/player.tscn`, clique no nó **Player** e veja o **Inspetor** à dir
 Abra `scripts/levels/level_data.gd`. Cada andar é um desenho em texto com **20 caracteres por linha**:
 
 ```
-#  concreto        =  viga de aço       -  andaime (atravessa por baixo)
-P  início          E  saída             o  parafuso
-^  vergalhão       C  tábua podre       H  martelo pendurado
-K  cliente         M  plataforma móvel  V  elevador
+CENÁRIO   #  concreto   =  viga de aço   -  andaime (atravessa por baixo)
+          C  tábua podre   M  viga no guindaste   V  elevador   J  pneu-mola
+COISAS    P  início   E  capacete de ouro (fim)   o  porca   !  placa de segurança
+PERIGOS   ^  vergalhão          H  martelo (cai quando você passa embaixo)
+          K  cliente (pisável)  W  peão com carrinho (não pisável)
+          A  pombo (pisável)    D  drone da fiscalização
+          S  serra no trilho    ~  cabo com faísca    X  bate-estaca
 ```
 
-Regras de ouro: até **3 linhas** de distância entre plataformas = pulo simples; **4–5 linhas** = precisa de pulo duplo; poço para escalar parede = **3 colunas** de largura. Se um mapa tiver erro (linha com tamanho errado, sem `P` ou sem `E`), aparece uma mensagem vermelha na aba **Saída** da Godot.
+Regras de ouro: até **3 linhas** entre plataformas = pulo simples; **4–6 linhas** = pulo duplo; **7–8** = só com pneu-mola; poço para escalar parede = **3 colunas** de largura. O arquivo `tools/gen_levels.py` gera e confere os mapas (opcional, precisa de Python). Se um mapa tiver erro (linha com tamanho errado, sem `P` ou sem `E`), aparece uma mensagem vermelha na aba **Saída** da Godot.
 
 ---
 

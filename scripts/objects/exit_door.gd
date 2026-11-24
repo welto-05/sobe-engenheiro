@@ -1,7 +1,7 @@
 class_name ExitDoor
 extends Area2D
-## Porta do elevador de obra: chegar nela conclui o andar.
-## A posição fica nos "pés" da porta (base apoiada no chão).
+## Elevador de obra com o CAPACETE DE OURO: chegar nele conclui o andar.
+## A posição fica nos "pés" do elevador (base apoiada no chão).
 
 signal reached
 
@@ -14,7 +14,7 @@ func _ready() -> void:
 	collision_mask = 2
 	monitorable = false
 	z_index = 1
-	Shapes.rect(self, Vector2(12, 20), Vector2(0, -10))
+	Shapes.rect(self, Vector2(14, 22), Vector2(0, -11))
 	body_entered.connect(_on_body_entered)
 
 
@@ -28,23 +28,27 @@ func _on_body_entered(body: Node2D) -> void:
 		return
 	if body is Player and not (body as Player).is_dead():
 		_open = true
+		Poof.spawn(get_parent(), position + Vector2(0, -34), Color("ffd54f"), 14.0)
 		reached.emit()
 
 
 func _draw() -> void:
-	# moldura
-	draw_rect(Rect2(-10, -27, 20, 27), Color("37474f"))
-	draw_rect(Rect2(-10, -27, 20, 2), Color("607d8b"))
-	# portas (abrem ao chegar)
-	var gap: float = 6.0 if _open else 0.0
-	draw_rect(Rect2(-8, -24, 8 - gap, 24), Color("90a4ae"))
-	draw_rect(Rect2(gap, -24, 8 - gap, 24), Color("90a4ae"))
+	# cabine
+	Toon.rect(self, Rect2(-11, -28, 22, 28), Color("607d8b"))
+	draw_rect(Rect2(-11, -28, 22, 3), Color("ffc107"))
+	var gap: float = 7.0 if _open else 0.0
 	if _open:
-		draw_rect(Rect2(-8 + 8 - gap, -24, gap * 2.0, 24), Color("fff59d"))
-	draw_rect(Rect2(-1, -24, 2, 24), Color("546e7a"))
-	# placa "SAÍDA" piscando
-	var blink: bool = int(_t * 2.0) % 2 == 0
-	var sign_color := Color("43a047") if blink or _open else Color("2e7d32")
-	draw_rect(Rect2(-12, -38, 24, 9), sign_color)
-	var font: Font = ThemeDB.fallback_font
-	draw_string(font, Vector2(-11, -31), "SAÍDA", HORIZONTAL_ALIGNMENT_CENTER, 22, 8, Color.WHITE)
+		draw_rect(Rect2(-9, -24, 18, 24), Color("fff59d"))
+	draw_rect(Rect2(-9, -24, 9 - gap, 24), Color("b0bec5"))
+	draw_rect(Rect2(gap, -24, 9 - gap, 24), Color("b0bec5"))
+	if not _open:
+		draw_rect(Rect2(-1, -24, 2, 24), Color("78909c"))
+	# capacete de ouro flutuando e brilhando em cima
+	var bob: float = sin(_t * 3.0) * 2.0
+	var c := Vector2(0, -38 + bob)
+	for i in 8:
+		var a: float = _t * 1.5 + TAU * i / 8.0
+		draw_line(c + Vector2(cos(a), sin(a)) * 9.0, c + Vector2(cos(a), sin(a)) * 13.0, Color(1, 0.9, 0.4, 0.7), 1.0)
+	Toon.circle(self, c, 6.0, Color("ffd54f"))
+	Toon.rect(self, Rect2(c.x - 8, c.y + 1, 16, 3), Color("ffb300"))
+	draw_rect(Rect2(c.x - 3, c.y - 5, 3, 2), Color(1, 1, 1, 0.8))
