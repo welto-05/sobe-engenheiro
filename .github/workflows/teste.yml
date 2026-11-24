@@ -1,0 +1,38 @@
+name: Teste do jogo
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  teste:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GODOT_VERSION: "4.4.1"
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Baixar a Godot (sem interface)
+        run: |
+          cd "$RUNNER_TEMP"
+          wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q "Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          mv "Godot_v${GODOT_VERSION}-stable_linux.x86_64" godot
+          chmod +x godot
+          echo "GODOT=$RUNNER_TEMP/godot" >> "$GITHUB_ENV"
+
+      - name: Importar o projeto
+        run: $GODOT --headless --path . --import 2>&1 | tee import.log
+
+      - name: Rodar todos os andares
+        run: |
+          timeout 180 $GODOT --headless --path . -- --teste 2>&1 | tee teste.log
+          if grep -E "SCRIPT ERROR|Parse Error|Invalid call|Invalid access|ERROR: Andar" teste.log; then
+            echo "::error::O teste encontrou erros (veja as linhas acima)."
+            exit 1
+          fi
+          grep -q "\[TESTE\] Concluído." teste.log || { echo "::error::O teste não terminou."; exit 1; }
+          echo "Tudo certo!"
